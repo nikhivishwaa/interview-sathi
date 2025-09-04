@@ -1,0 +1,1 @@
+docker run -it -v .:/app -p 5173:3000 --entrypoint ash node:22-alpine
