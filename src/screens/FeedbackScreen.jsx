@@ -10,9 +10,13 @@ import {
 import { useInterview } from "../context/InterviewContext";
 import AnalyticsTracker from "../components/AnalyticsTracker";
 import logger from "../utils/logger";
+import PDFViewer from "../components/PDFViewer";
+import { useAuth } from "../context/AuthContext";
 
 export default function FeedbackScreen() {
   const { interviews, resumes } = useInterview();
+  const [previewResume, setPreviewResume] = useState(null);
+  const { apiUrl } = useAuth();
 
   const getResumeMap = (resumeList) => {
     const obj = {};
@@ -42,7 +46,9 @@ export default function FeedbackScreen() {
       list = list.filter((i) => new Date(i.created_at) >= new Date(fromDate));
     }
     if (toDate) {
-      list = list.filter((i) => new Date(i.created_at) <= new Date(toDate));
+      list = list.filter(
+        (i) => new Date(i.created_at) <= new Date(new Date(toDate).getTime() + 24*3600*1000)
+      );
     }
 
     // Sort by newest first
@@ -59,7 +65,7 @@ export default function FeedbackScreen() {
   return (
     <>
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <AnalyticsTracker screenName="FeedbackScreen"/>
+        <AnalyticsTracker screenName="FeedbackScreen" />
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -151,12 +157,7 @@ export default function FeedbackScreen() {
                   <FileText className="h-5 w-5 text-indigo-500" />
                   <button
                     onClick={() =>
-                      window.open(
-                        `${import.meta.env.VITE_BACKEND}${
-                          resumeMap[`r${interview.resume}`].file
-                        }`,
-                        "_blank"
-                      )
+                      setPreviewResume(resumeMap[`r${interview.resume}`])
                     }
                     className="text-gray-700 hover:text-indigo-600 font-medium"
                   >
@@ -183,6 +184,13 @@ export default function FeedbackScreen() {
             </p>
           )}
         </div>
+
+        {previewResume && (
+          <PDFViewer
+            fileUrl={apiUrl + previewResume.file}
+            onClose={() => setPreviewResume(null)}
+          />
+        )}
       </div>
     </>
   );

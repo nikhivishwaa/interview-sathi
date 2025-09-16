@@ -2,25 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 function PDFViewer({ fileUrl, onClose }) {
-  const [pdfUrl, setPdfUrl] = useState(null);
-
-  useEffect(() => {
-    if (!fileUrl) return;
-
-    fetch(fileUrl)
-      .then((res) => res.blob())
-      .then((blob) => {
-        const url = URL.createObjectURL(blob);
-        setPdfUrl(url);
-      })
-      .catch((err) => console.error("Error fetching PDF:", err));
-
-    return () => {
-      if (pdfUrl) URL.revokeObjectURL(pdfUrl);
-    };
-  }, [fileUrl]);
-
-  if (!fileUrl) return null;
+  if (!fileUrl) return <></>;
 
   return (
     <motion.div
@@ -43,9 +25,9 @@ function PDFViewer({ fileUrl, onClose }) {
         >
           ✕ Close
         </button>
-        {pdfUrl ? (
+        {fileUrl ? (
           <iframe
-            src={pdfUrl}
+            src={fileUrl}
             className="w-full h-full rounded-b-lg"
             title="Resume PDF"
           />

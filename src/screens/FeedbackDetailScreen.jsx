@@ -11,7 +11,6 @@ import AnalyticsTracker from "../components/AnalyticsTracker";
 import { sendAnalytics } from "../utils/firebase";
 import logger from "../utils/logger";
 
-const API = import.meta.env.VITE_BACKEND;
 const FeedbackDetailScreen = () => {
   const { id } = useParams();
   const route = useLocation();
@@ -24,7 +23,7 @@ const FeedbackDetailScreen = () => {
       try {
         logger({ token });
         setLoading(true);
-        const response = await axios.get(`${API}/feedback/${id}/`, {
+        const response = await axios.get(`${apiUrl}/feedback/${id}/`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

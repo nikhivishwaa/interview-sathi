@@ -5,13 +5,16 @@ import App from "./App";
 import { AuthProvider } from "./context/AuthContext";
 import { InterviewProvider } from "./context/InterviewContext";
 import "./index.css";
+import { CodingProvider } from "./context/CodingContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <InterviewProvider>
-          <App />
+          <CodingProvider>
+            <App />
+          </CodingProvider>
         </InterviewProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -6,6 +6,7 @@
   --foreground: 210 40% 9.8%;
   --card: 0 0% 100%;
   --card-foreground: 210 40% 9.8%;
+  --card-border: #e7e7f1
   --popover: 0 0% 100%;
   --popover-foreground: 210 40% 9.8%;
   --primary: 222.2 47.4% 11.2%;
@@ -209,6 +210,11 @@
 
 .screen-bg{
   background: linear-gradient(86deg, #F0F8FF 1.71%, #FFFCEF 99.56%);
+}
+
+
+.border-card{
+  border: 1px solid #e7e7f1;
 }
 
 .Loader {

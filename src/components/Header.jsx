@@ -36,6 +36,18 @@ const Header = () => {
                   Dashboard
                 </Link>
                 <Link
+                  to="/jobs"
+                  className="text-gray-700 hover:text-sathi-primary transition-colors"
+                >
+                  Jobs
+                </Link>
+                <Link
+                  to="/practice"
+                  className="text-gray-700 hover:text-sathi-primary transition-colors"
+                >
+                  Practice
+                </Link>
+                <Link
                   to="/feedback"
                   className="text-gray-700 hover:text-sathi-primary transition-colors"
                 >
