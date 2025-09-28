@@ -1,6 +1,28 @@
 @import "tailwindcss";
 
 
+
+/* Add to your global CSS (index.css / global.css) */
+.animated-gradient {
+  background: linear-gradient(-45deg, #eef2ff 0%, #fff0f6 33%, #f3f4ff 66%, #eef2ff 100%);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Optional small helper (if you want clarity behind text) */
+.hero-overlay {
+  background: rgba(255,255,255,0.12); /* subtle wash so text stays readable */
+}
+
+
+
+
 :root {
   --background: 210 40% 98%; /* Example Light Theme HSL values */
   --foreground: 210 40% 9.8%;

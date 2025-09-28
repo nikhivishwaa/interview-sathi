@@ -28,6 +28,7 @@ import logger from "./utils/logger";
 import JobDetailsScreen from "./screens/JobDetailsScreen";
 import JobsScreen from "./screens/JobsScreen";
 import ProblemsScreen from "./screens/ProblemsScreen";
+import QuizPage from "./screens/QuizPage";
 
 const usePageTitle = () => {
   const location = useLocation();
@@ -48,7 +49,8 @@ const usePageTitle = () => {
       "/feedback": "Feedback | Interview Sathi",
       "/resumes": "Resumes | Interview Sathi",
       "/contest": "Contest | Interview Sathi",
-      "/practice": "Solve Coding Problems, Search For Problem statements Asked by big MNC's | Interview Sathi",
+      "/practice":
+        "Solve Coding Problems, Search For Problem statements Asked by big MNC's | Interview Sathi",
       "/jobs": "Explore Job Oppertunities | Interview Sathi",
     };
     logger({ location });
@@ -79,8 +81,20 @@ export default function App() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/register" element={<RegisterScreen />} />
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
-        <Route path="/jobs" element={<Layout element={<JobDetailsScreen />} />} />
+        <Route
+          path="/jobs"
+          element={<Layout element={<JobDetailsScreen />} />}
+        />
         <Route path="/jobs/:id" element={<Layout element={<JobsScreen />} />} />
+
+        {/* Quiz Route */}
+        <Route element={<PrivateRoute />}>
+          <Route
+            path="/quizzes"
+            element={<HeaderLayout element={<QuizPage />} />}
+          />
+        </Route>
+
         <Route
           path="/reset-password/:token"
           element={<ResetPasswordScreen />}
