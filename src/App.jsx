@@ -83,9 +83,9 @@ export default function App() {
         <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
         <Route
           path="/jobs"
-          element={<Layout element={<JobDetailsScreen />} />}
+          element={<Layout element={<JobsScreen />} />}
         />
-        <Route path="/jobs/:id" element={<Layout element={<JobsScreen />} />} />
+        <Route path="/jobs/:id" element={<Layout element={<JobDetailsScreen />} />} />
 
         {/* Quiz Route */}
         <Route element={<PrivateRoute />}>

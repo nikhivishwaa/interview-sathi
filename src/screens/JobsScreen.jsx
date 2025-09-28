@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import AnalyticsTracker from "../components/AnalyticsTracker";
+import jobsData from "../data/jobs.json";
+import logger from "../utils/logger";
+import JobCard from "../components/JobCard";
 
 function JobsScreen() {
   const [loading, setLoading] = useState(true);
@@ -17,20 +20,24 @@ function JobsScreen() {
   const [job, setJob] = useState({});
   const route = useLocation();
 
-    useEffect(() => {
+  useEffect(() => {
     const fetchJobs = async () => {
       const role = "data scientist";
       const pageNo = 2;
       const keyword = role.replace(" ", "%20");
       const seoKey = role.replace(" ", "-") + pageNo > 1 ? `-${pageNo}` : "";
 
-     URL='/jobs'
+      const URL = "/jobs";
       const response = await axios.get(URL);
       if (response.status === 200) {
         logger({ data: response.data });
       }
     };
-    // fetchJobs()
+    // setJob(jobsData)
+    setLoading(false);
+    logger(job);
+
+    fetchJobs();
   }, []);
 
   const fullJDUrl = job?.jdURL;
@@ -208,178 +215,11 @@ function JobsScreen() {
     <div className="max-w-6xl mx-auto px-6 py-8 bg-">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* MAIN COLUMN */}
-        <main className="lg:col-span-2 space-y-6">
-          <div className="bg-white rounded-2xl shadow-lg p-6 animate-fadeIn">
-            <div className="flex gap-4 items-start">
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={job.companyName}
-                  className="w-20 h-20 object-contain rounded-lg p-2 bg-white shadow-sm"
-                />
-              ) : (
-                <div className="w-20 h-20 flex items-center justify-center rounded-lg bg-gray-100 shadow-sm">
-                  <BriefcaseIcon className="text-gray-500" />
-                </div>
-              )}
-              <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900">
-                  {job.title}
-                </h1>
-                <p className="text-gray-600 mt-1 font-medium">
-                  {job.companyName}
-                </p>
-                <div className="flex flex-wrap gap-3 mt-3 text-sm text-gray-700">
-                  <span className="flex items-center gap-1">
-                    <MapPin size={14} />{" "}
-                    {job.placeholders?.find((p) => p.type === "location")
-                      ?.label || "-"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Briefcase size={14} /> {job.experienceText || "-"}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <IndianRupeeIcon size={14} /> {salaryText}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Pin size={14} /> {job.workMode || "On-site"}
-                  </span>
-                </div>
-              </div>
-              {/* Actions */}
-              <div className="flex flex-col gap-2">
-                <a
-                  href={fullJDUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow"
-                >
-                  <ExternalLink size={16} /> Apply
-                </a>
-                <button
-                  onClick={toggleSave}
-                  className={`px-3 py-2 rounded-lg flex items-center gap-2 shadow ${
-                    saved
-                      ? "bg-yellow-50 text-yellow-700"
-                      : "bg-white text-gray-700"
-                  }`}
-                >
-                  <Save size={16} /> {saved ? "Saved" : "Save"}
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Job description */}
-          <section className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-lg font-semibold mb-3">Job Description</h2>
-            <div
-              className={`prose prose-sm text-gray-800 max-w-none ${
-                !expanded ? "line-clamp-6" : ""
-              }`}
-              dangerouslySetInnerHTML={{ __html: job.jobDescription }}
-            />
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="mt-2 text-blue-600 text-sm hover:underline"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          </section>
+        <main className="lg:col-span-3 space-y-6">
+          {jobsData.map((job, key) => (
+            <JobCard key={key} job={job} />
+          ))}
         </main>
-
-        {/* SIDEBAR */}
-        <aside className="lg:col-span-1 sticky top-24 space-y-4">
-          <div className="bg-white p-4 rounded-lg border-card">
-            <div
-              className="flex items-center gap-3 cursor-pointer"
-              onClick={() =>
-                window.open(
-                  fullJDUrl,
-                  "_blank"
-                )
-              }
-            >
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={job.companyName}
-                  className="w-16 h-16 object-contain rounded-md"
-                />
-              ) : (
-                <div className="w-16 h-16 bg-gray-100 rounded-md flex items-center justify-center">
-                  <Briefcase size={20} />
-                </div>
-              )}
-              <div>
-                <div className="text-sm text-gray-500">Company</div>
-                <div className="font-semibold">{job.companyName}</div>
-              </div>
-            </div>
-
-            {/* AmbitionBox / ratings */}
-            {job.ambitionBoxData && (
-              <div
-                className="mt-4 text-sm font-semibold cursor-pointer"
-                onClick={() => window.open(job.ambitionBoxData.Url, "_blank")}
-              >
-                ⭐ {job.ambitionBoxData.AggregateRating} |{" "}
-                {job.ambitionBoxData.ReviewsCount} reviews
-              </div>
-            )}
-
-            {/* Quick info */}
-            <div className="mt-4 space-y-2 text-sm text-gray-700">
-              <div>
-                <strong>Job ID:</strong> {job.jobId}
-              </div>
-              <div>
-                <strong>Company ID:</strong> {job.companyId}
-              </div>
-              <div>
-                <strong>Posted at:</strong> {createdAt}
-              </div>
-            </div>
-
-            {/* Action row */}
-            <div className="mt-4 flex gap-2">
-              <a
-                href={fullJDUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 inline-flex justify-center items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700"
-              >
-                <ExternalLink size={16} /> Apply
-              </a>
-              <button
-                onClick={toggleSave}
-                className={`px-3 py-2 rounded-md border cursor-pointer ${
-                  saved
-                    ? "bg-yellow-50 border-yellow-400 text-yellow-700"
-                    : "bg-white border-gray-200 text-gray-700"
-                }`}
-              >
-                <Save size={16} />
-              </button>
-            </div>
-          </div>
-
-          {/* Tags (sidebar) */}
-          {skills.length > 0 && (
-            <div className="bg-white p-4 rounded-lg border-card">
-              <div className="font-medium mb-2">Skills</div>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((t, i) => (
-                  <span
-                    key={i}
-                    className="px-[15px] py-[5px] capitalize border border-gray-300 transition-all text-gray-600 duration-100 hover:border-sathi-primary hover:text-sathi-primary font-semibold rounded-full text-sm"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   );
