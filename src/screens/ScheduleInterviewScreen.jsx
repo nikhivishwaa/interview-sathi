@@ -88,14 +88,27 @@ const ScheduleInterviewScreen = () => {
     <main className="bg-gray-50 min-h-screen">
       <AnalyticsTracker screenName="ScheduleInterviewScreen" />
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white py-12 shadow-md">
+      {/* <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white py-12 shadow-md">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-2">Schedule Your Interview</h1>
           <p className="text-lg opacity-90">
             Pick a role, upload your resume, and choose your slot
           </p>
         </div>
-      </div>
+      </div> */}
+
+
+<div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-400 text-white py-14 shadow-md">
+  <div className="container mx-auto px-4 text-center">
+    <h1 className="text-4xl md:text-5xl font-bold mb-2">
+      Schedule Your <span className="text-yellow-200">Interview</span>
+    </h1>
+    <p className="text-lg md:text-xl opacity-90">
+      Pick a role, upload your resume, and choose your slot
+    </p>
+  </div>
+</div>
+
 
       {/* Form Section */}
       <div className="container mx-auto px-4 py-12">
@@ -105,149 +118,157 @@ const ScheduleInterviewScreen = () => {
               Interview Details
             </h2>
 
+
+
+
+
+
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Job Role */}
-              <div>
-                <label
-                  htmlFor="jobRole"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Job Role
-                </label>
-                <select
-                  id="jobRole"
-                  value={jobRole}
-                  onChange={(e) => setJobRole(e.target.value)}
-                  className="sathi-input"
-                  required
-                >
-                  <option value="frontend">Frontend Developer</option>
-                  <option value="backend">Backend Developer</option>
-                </select>
-              </div>
+  {/* Job Role */}
+  <div>
+    <label
+      htmlFor="jobRole"
+      className="block text-sm font-medium text-gray-700 mb-2"
+    >
+      Job Role
+    </label>
+    <select
+      id="jobRole"
+      value={jobRole}
+      onChange={(e) => setJobRole(e.target.value)}
+      className="sathi-input border-gray-300 rounded-lg px-4 py-2 w-full shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
+      required
+    >
+      <option value="frontend">Frontend Developer</option>
+      <option value="backend">Backend Developer</option>
+    </select>
+  </div>
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label
-                    htmlFor="date"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    id="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    min={minDate}
-                    max={maxDateString}
-                    className="sathi-input"
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="time"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Time
-                  </label>
-                  <input
-                    type="time"
-                    id="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                    className="sathi-input"
-                    required
-                  />
-                </div>
-              </div>
+  {/* Date & Time */}
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div>
+      <label
+        htmlFor="date"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Date
+      </label>
+      <input
+        type="date"
+        id="date"
+        value={date}
+        onChange={(e) => setDate(e.target.value)}
+        min={minDate}
+        max={maxDateString}
+        className="sathi-input border-gray-300 rounded-lg px-4 py-2 w-full shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
+        required
+      />
+    </div>
+    <div>
+      <label
+        htmlFor="time"
+        className="block text-sm font-medium text-gray-700 mb-2"
+      >
+        Time
+      </label>
+      <input
+        type="time"
+        id="time"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
+        className="sathi-input border-gray-300 rounded-lg px-4 py-2 w-full shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all duration-300"
+        required
+      />
+    </div>
+  </div>
 
-              {/* Resume Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-4">
-                  Select Resume
-                </label>
-                <div className="grid gap-4">
-                  {resumes.map((r) => (
-                    <label
-                      key={r.id}
-                      htmlFor={`res-${r.id}`}
-                      className={`flex items-center justify-between border rounded-lg px-4 py-3 cursor-pointer transition transform hover:scale-[1.02] ${
-                        resumeId == r.id
-                          ? "border-indigo-500 bg-indigo-50"
-                          : "border-gray-200 bg-white"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          id={`res-${r.id}`}
-                          name="resume_id"
-                          value={r.id}
-                          checked={resumeId == r.id}
-                          onChange={(e) => setResumeId(e.target.value)}
-                          className="text-indigo-600 focus:ring-indigo-500"
-                        />
-                        <span className="text-gray-800 font-medium">
-                          📄{" "}
-                          {r.name.length >= 15
-                            ? r.name.slice(0, 15) + "..."
-                            : r.name}
-                        </span>
-                        <span className="text-gray-500 text-sm">
-                          ({new Date(r.uploaded_at).toLocaleDateString()})
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewResume(r)}
-                        className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold"
-                      >
-                        Preview ↗
-                      </button>
-                    </label>
-                  ))}
-                </div>
-              </div>
-              {/* Job Description */}
-              <div>
-                <label
-                  htmlFor="jd"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Job Description
-                </label>
-                <textarea
-                  rows={5}
-                  id="jd"
-                  value={jd}
-                  onChange={(e) => setJD(e.target.value)}
-                  className="sathi-input"
-                  required
-                  placeholder="Paste the job description here..."
-                />
-              </div>
+  {/* Resume Selection */}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-4">
+      Select Resume
+    </label>
+    <div className="grid gap-4">
+      {resumes.map((r) => (
+        <label
+          key={r.id}
+          htmlFor={`res-${r.id}`}
+          className={`flex items-center justify-between border rounded-xl px-4 py-3 cursor-pointer transition transform hover:scale-[1.03] hover:shadow-lg duration-300 ${
+            resumeId == r.id
+              ? "border-indigo-500 bg-indigo-50 shadow-md"
+              : "border-gray-200 bg-white"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <input
+              type="radio"
+              id={`res-${r.id}`}
+              name="resume_id"
+              value={r.id}
+              checked={resumeId == r.id}
+              onChange={(e) => setResumeId(e.target.value)}
+              className="text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-gray-800 font-medium">
+              📄 {r.name.length >= 15 ? r.name.slice(0, 15) + "..." : r.name}
+            </span>
+            <span className="text-gray-500 text-sm">
+              ({new Date(r.uploaded_at).toLocaleDateString()})
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPreviewResume(r)}
+            className="text-indigo-600 hover:text-indigo-800 text-sm font-semibold"
+          >
+            Preview ↗
+          </button>
+        </label>
+      ))}
+    </div>
+  </div>
 
-              {/* Submit Button */}
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  disabled={scheduling}
-                  className="sathi-btn-primary w-full py-3 text-lg shadow-lg hover:shadow-xl transition"
-                >
-                  {scheduling ? (
-                    <>
-                      {spinner}
-                      Scheduling...
-                    </>
-                  ) : (
-                    "Schedule Interview"
-                  )}
-                </button>
-              </div>
-            </form>
+  {/* Job Description */}
+  <div>
+    <label
+      htmlFor="jd"
+      className="block text-sm font-medium text-gray-700 mb-2"
+    >
+      Job Description
+    </label>
+    <textarea
+      rows={5}
+      id="jd"
+      value={jd}
+      onChange={(e) => setJD(e.target.value)}
+      className="sathi-input border-gray-300 rounded-lg px-4 py-2 w-full shadow-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 resize-none transition-all duration-300"
+      required
+      placeholder="Paste the job description here..."
+    />
+  </div>
+
+  {/* Submit Button */}
+  <div className="pt-4">
+    <button
+      type="submit"
+      disabled={scheduling}
+      className="sathi-btn-primary w-full py-3 text-lg font-semibold text-white rounded-lg bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 shadow-lg hover:shadow-xl transform hover:-translate-y-1 hover:scale-105 transition-all duration-300"
+    >
+      {scheduling ? (
+        <>
+          {spinner} Scheduling...
+        </>
+      ) : (
+        "Schedule Interview"
+      )}
+    </button>
+  </div>
+</form>
+
+
+
+
+
+
           </div>
         </div>
       </div>
