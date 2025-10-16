@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 function HeaderLayout({ element }) {
   return (
     <>
-      <div className="min-h-screen bg-amber-300">
+      <div className="min-h-screen bg-white">
         <Header />
         {element}
       </div>
