@@ -12,11 +12,10 @@ import logger from "../utils/logger";
 import { useCoding } from "../context/CodingContext";
 
 function ProblemWindow() {
-  const [active, setActive] = useState("ps");
   const [content, setContent] = useState("");
   const { id } = useParams();
   const route = useLocation();
-  const { problem, setProblem } = useCoding();
+  const { problemTab, setProblemTab, problem, setProblem } = useCoding();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { getAuthHeader, apiUrl } = useAuth();
@@ -92,17 +91,17 @@ function ProblemWindow() {
       <div className="flex justify-start gap-4 w-full bg-gray-100 p-2 sticky top-0 z-10">
         <button
           className={`px-3 border-b-2 border-gray-100 ${
-            active === "ps" && "border-green-500"
+            problemTab === "ps" && "border-green-500"
           } `}
-          onClick={() => setActive("ps")}
+          onClick={() => setProblemTab("ps")}
         >
           Problem Stetment
         </button>
         <button
           className={`px-3 border-b-2 border-gray-100 ${
-            active !== "ps" && "border-green-500"
+            problemTab !== "ps" && "border-green-500"
           } `}
-          onClick={() => setActive("submission")}
+          onClick={() => setProblemTab("submission")}
         >
           {" "}
           Submission
@@ -113,7 +112,7 @@ function ProblemWindow() {
           <Loader />
         ) : (
           <>
-            {active === "ps" ? (
+            {problemTab === "ps" ? (
               <ProblemStatement problem={problem} />
             ) : (
               <Submission problem={problem} />

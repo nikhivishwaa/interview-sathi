@@ -8,6 +8,7 @@ const CodingContext = createContext(undefined);
 
 export const CodingProvider = ({ children }) => {
   const [problemStatements, setProblemStatements] = useState([]);
+  const [problemTab, setProblemTab] = useState("ps");
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState("");
   const [compileResult, setCompileResult] = useState(null);
@@ -78,6 +79,8 @@ export const CodingProvider = ({ children }) => {
     setCompileResult,
     submissionResult,
     setSubmissionResult,
+    problemTab,
+    setProblemTab,
   };
 
   return (

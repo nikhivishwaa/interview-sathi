@@ -153,6 +153,7 @@ import { useCoding } from "../context/CodingContext";
 import Loader from "./Loader";
 import { motion, AnimatePresence } from "framer-motion";
 import { PlusCircle } from "lucide-react";
+import logger from "../utils/logger";
 
 function Submission({ problem }) {
   const [active, setActive] = useState("cout");
@@ -164,6 +165,7 @@ function Submission({ problem }) {
 
   useEffect(() => {
     if (!compileResult) setCompileResult(problem.testcases);
+    logger({compileResult})
   }, [compileResult, setCompileResult, problem.testcases]);
 
   const addCustomCase = () => {

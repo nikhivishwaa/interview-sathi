@@ -7,15 +7,25 @@ import { useCoding } from "../context/CodingContext";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import { toast } from "sonner";
+import { useParams } from "react-router-dom";
+import { Loader2 as Spinner } from "lucide-react";
 
 function CodeEditor() {
   const [language, setLanguage] = useState("javascript");
-  const [submitting, setSubmitting] = useState(false);
+  const [submitting, setSubmitting] = useState(0);
   const [theme, setTheme] = useState("vs-dark");
   const editorRef = useRef(null);
-  const { code, problem, setCode, setCompileResult, setSubmissionResult } =
-    useCoding();
+  const {
+    problemTab,
+    setProblemTab,
+    code,
+    problem,
+    setCode,
+    setCompileResult,
+    setSubmissionResult,
+  } = useCoding();
   const { apiUrl, getAuthHeader } = useAuth();
+  const { id } = useParams();
 
   function handleEditorDidMount(editor, monaco) {
     editorRef.current = editor;
@@ -24,19 +34,14 @@ function CodeEditor() {
   const compileAndRun = async () => {
     const compileConfig = {
       code: editorRef.current.getValue(),
-      language,
-      testcases: problem?.testcases.map((tc, idx) => ({
-        id: idx + 1,
-        input_data: tc.input_data,
-        expected_output: tc.expected_output,
-      })),
+      language: `${lanuages[language]?.id}`,
     };
 
     try {
       if (code === compileConfig.code) return;
-      setSubmitting(true);
+      setSubmitting(1);
       const response = await axios.post(
-        `${apiUrl}:8000/execute/testcases`,
+        `${apiUrl}/coding/ps/${id}/run/`,
         compileConfig,
         getAuthHeader()
       );
@@ -50,7 +55,12 @@ function CodeEditor() {
         //     title: data?.title,
         //   });
         // }
-        setCompileResult(results);
+        const completeResult = results.map((value, index) => {
+          let x = problem.testcases[index] || {};
+          x = { ...x, ...value };
+          return x;
+        });
+        setCompileResult(completeResult);
         setCode(compileConfig.code);
       }
     } catch (error) {
@@ -59,8 +69,53 @@ function CodeEditor() {
         toast.error("This Coding Problem Not Exist");
       else toast.error("Failed to load Problem Statement");
     } finally {
-      setSubmitting(false);
+      setSubmitting(0);
+      setProblemTab("submission");
     }
+    logger({ problem });
+  };
+  const submitSolution = async () => {
+    const compileConfig = {
+      code: editorRef.current.getValue(),
+      language: `${lanuages[language]?.id}`,
+    };
+
+    try {
+      if (code === compileConfig.code) return;
+      setSubmitting(2);
+      const response = await axios.post(
+        `${apiUrl}/coding/ps/${id}/submit/`,
+        compileConfig,
+        getAuthHeader()
+      );
+      if (response.status === 200) {
+        const { results } = response.data;
+        logger({ results });
+
+        // if (route?.state?.lazyload) {
+        //   sendAnalytics("coding_problem_opened", {
+        //     ps_id: id,
+        //     title: data?.title,
+        //   });
+        // }
+        const completeResult = results.map((value, index) => {
+          let x = problem.testcases[index] || {};
+          x = { ...x, ...value };
+          return x;
+        });
+        setCompileResult(completeResult);
+        setCode(compileConfig.code);
+      }
+    } catch (error) {
+      console.error("Error fetching feedback:", error);
+      if (error?.response?.status === 404)
+        toast.error("This Coding Problem Not Exist");
+      else toast.error("Failed to load Problem Statement");
+    } finally {
+      setSubmitting(0);
+      setProblemTab("submission");
+    }
+    logger({ problem });
   };
 
   const file = lanuages[language];
@@ -110,15 +165,27 @@ function CodeEditor() {
       <div className="flex justify-end gap-3 bg-gray-100 p-2 pb-4 pr-6">
         <button
           onClick={() => compileAndRun(editorRef.current.getValue())}
-          className="py-1 px-2 shadow-md rounded-md text-white bg-[#1f883d] font-[600] text-[14px]"
+          className="py-1 px-2 flex gap-2 items-center shadow-md rounded-md text-white bg-[#1f883d] font-[600] text-[14px]"
         >
-          Compile & Run
+          {submitting == 1 ? (
+            <>
+              <Spinner className="animate-spin w-4 h-4" /> Compiling
+            </>
+          ) : (
+            "Compile & Run"
+          )}
         </button>
         <button
-          onClick={() => logger(editorRef.current.getValue())}
-          className="py-1 px-2 shadow-md rounded-md text-white bg-[#1f883d] font-[600] text-[14px]"
+          onClick={() => submitSolution()}
+          className="py-1 px-2 flex gap-2 items-center shadow-md rounded-md text-white bg-[#1f883d] font-[600] text-[14px]"
         >
-          Submit
+          {submitting == 2 ? (
+            <>
+              <Spinner className="animate-spin w-4 h-4" /> Submitting
+            </>
+          ) : (
+            "Submit"
+          )}
         </button>
       </div>
     </section>
