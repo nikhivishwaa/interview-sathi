@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics, logEvent, setUserId } from "firebase/analytics";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -11,6 +12,8 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_MEASUREMENT_ID,
 };
 
+
+
 const app = initializeApp(firebaseConfig);
 let analytics;
 
@@ -21,4 +24,7 @@ if (typeof window !== "undefined") {
 const sendAnalytics = (eventName, eventParams) =>
   logEvent(analytics, eventName, eventParams);
 
-export { analytics, sendAnalytics, setUserId };
+// SSO login with firebase
+const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
+export { analytics, sendAnalytics, setUserId, auth, googleProvider };

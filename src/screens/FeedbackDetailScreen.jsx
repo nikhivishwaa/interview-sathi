@@ -16,7 +16,7 @@ const FeedbackDetailScreen = () => {
   const route = useLocation();
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuth();
+  const { token, apiUrl } = useAuth();
 
   useEffect(() => {
     const fetchFeedback = async () => {

@@ -9,6 +9,8 @@ import { closeEye, openEye, spinner } from "../data/SvgImageData";
 import AnalyticsTracker from "../components/AnalyticsTracker";
 import { sendAnalytics } from "../utils/firebase";
 import logger from "../utils/logger";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../utils/firebase";
 
 const LoginScreen = () => {
   const { isAuthenticated, initiateAuthConfirmation, updateUser } = useAuth();
@@ -18,6 +20,7 @@ const LoginScreen = () => {
   }, []);
 
   const [submitting, setSubmitting] = useState(false);
+  const [isSSO, setIsSSO] = useState(false);
   const [email, setEmail] = useState("");
   const [validEmail, setValidEmail] = useState(true);
   const [emailError, setEmailError] = useState("");
@@ -71,12 +74,12 @@ const LoginScreen = () => {
       handleSignIn();
     }
   };
-  async function handleSignIn() {
+  async function handleSignIn(idToken = null) {
     try {
       const apiUrl = import.meta.env.VITE_BACKEND;
       const response = await axios.post(
-        `${apiUrl}/users/login/`,
-        { email, password },
+        `${apiUrl}/users/login/${idToken ? "sso/" : ""}`,
+        idToken ? { id_token: idToken } : { email, password },
         {
           headers: {
             "Content-Type": "application/json",
@@ -111,10 +114,25 @@ const LoginScreen = () => {
       setSubmitting(false);
     }
   }
+  async function loginWithGoogle() {
+    setSubmitting(true);
+    setIsSSO(true);
+    // Firebase popup for login
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+    console.log({ user });
+
+    // Getting Firebase ID Token (JWT from Firebase)
+    const idToken = await user.getIdToken();
+    console.log({ idToken });
+
+    // authenticating with backend
+    await handleSignIn(idToken);
+  }
 
   return (
     <div className="dot-bg min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <AnalyticsTracker screenName="LoginScreen"/>
+      <AnalyticsTracker screenName="LoginScreen" />
       <div className="mx-auto text-center mb-10">
         <Link to="/">
           <img
@@ -182,27 +200,28 @@ const LoginScreen = () => {
                 >
                   Password
                 </label>
-                <div className="mt-1"><div className="relative">
-                  <input
-                    id="password"
-                    className="sathi-input pr-10"
-                    placeholder="••••••••"
-                    readOnly={submitting}
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required={true}
-                    style={{ borderColor: validPassword ? "#555" : "red" }}
-                    onBlur={validatePassword}
-                  />
-                  <button
-                    type="button"
+                <div className="mt-1">
+                  <div className="relative">
+                    <input
+                      id="password"
+                      className="sathi-input pr-10"
+                      placeholder="••••••••"
+                      readOnly={submitting}
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required={true}
+                      style={{ borderColor: validPassword ? "#555" : "red" }}
+                      onBlur={validatePassword}
+                    />
+                    <button
+                      type="button"
                       className="absolute right-0 top-1/2 -translate-y-1/2 pr-3 text-gray-500"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? openEye : closeEye}
-                  </button>
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? openEye : closeEye}
+                    </button>
                   </div>
                   <span className="block text-[12px] font-medium py-1 px-[10px] text-[red]">
                     {passwordError}
@@ -243,10 +262,20 @@ const LoginScreen = () => {
                 disabled={submitting}
                 className="sathi-btn-primary w-full"
               >
-                {submitting ? (
-                  spinner
-                ) : null}
+                {submitting && !isSSO ? spinner : null}
                 Sign in
+              </button>
+            </div>
+            
+            <div>
+              <button
+                disabled={submitting}
+                onClick={() => loginWithGoogle()}
+                className="sathi-btn-secondary w-full"
+              >
+                {submitting && isSSO ? spinner : null}
+                <img src="/icons/google.png" alt="google" className="h-5 w-5 inline-block mr-2" />
+                Sign in with Google
               </button>
             </div>
           </form>
