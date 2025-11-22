@@ -274,7 +274,7 @@ const ScheduleInterviewScreen = () => {
       </div>
       {previewResume && (
         <PDFViewer
-          fileUrl={apiUrl + previewResume.file}
+          fileUrl={previewResume.file}
           onClose={() => setPreviewResume(null)}
         />
       )}

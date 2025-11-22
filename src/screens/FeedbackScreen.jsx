@@ -187,7 +187,7 @@ export default function FeedbackScreen() {
 
         {previewResume && (
           <PDFViewer
-            fileUrl={apiUrl + previewResume.file}
+            fileUrl={previewResume.file}
             onClose={() => setPreviewResume(null)}
           />
         )}
