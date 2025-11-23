@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -8,13 +8,13 @@ import { closeEye, openEye, spinner } from "../data/SvgImageData";
 import AnalyticsTracker from "../components/AnalyticsTracker";
 import { sendAnalytics } from "../utils/firebase";
 import logger from "../utils/logger";
+import secureLocalStorage from "react-secure-storage";
 
 const RegisterScreen = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, apiUrl, initiateAuthConfirmation, updateUser } =
+    useAuth();
   const navigate = useNavigate();
-  useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard", { replace: true });
-  }, []);
+  const route = useLocation();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
@@ -29,6 +29,7 @@ const RegisterScreen = () => {
     college: "",
     password: "",
     confirm_password: "",
+    verified: false,
   });
   const [error, setError] = useState({
     fnameError: "",
@@ -41,6 +42,14 @@ const RegisterScreen = () => {
     repasswordError: "",
   });
 
+  useEffect(() => {
+    if (isAuthenticated) navigate("/dashboard", { replace: true });
+    if (route?.state?.sso) {
+      const userPrefilledData = { ...userInput, ...route?.state?.userData };
+      console.log(userPrefilledData);
+      setUserInput(userPrefilledData);
+    }
+  }, []);
   const handleChange = (e) => {
     setUserInput({ ...userInput, [e.target.name]: e.target.value });
   };
@@ -139,7 +148,7 @@ const RegisterScreen = () => {
     checks.lnameError = validateLname();
     checks.genderError = validateGender();
     checks.phoneError = validatePhone();
-    checks.emailError = validateEmail();
+    checks.emailError = route?.state?.sso ? "" : validateEmail();
     checks.collegeError = validateCollege();
     checks.passwordError = validatePassword();
     checks.repasswordError = validateRepassword();
@@ -160,7 +169,6 @@ const RegisterScreen = () => {
 
   async function handleSignUp() {
     try {
-      const apiUrl = import.meta.env.VITE_BACKEND;
       const response = await axios.post(`${apiUrl}/users/signup/`, userInput, {
         headers: {
           "Content-Type": "application/json",
@@ -169,11 +177,30 @@ const RegisterScreen = () => {
       if (response.status === 201) {
         logger(response.data);
         const { userId } = response.data.data;
+
         sendAnalytics("user_joined", { id: userId });
-        toast.success("Registration successful! Please log in.");
-        navigate("/login", {
-          replace: true,
-        });
+        if (route?.state?.sso) {
+          const { access, refresh, user } = response.data.data;
+          secureLocalStorage.setItem("token", access);
+          secureLocalStorage.setItem("refresh_token", refresh);
+          updateUser(user);
+          secureLocalStorage.setItem("lastLogin", new Date().getTime());
+          initiateAuthConfirmation();
+          toast.success(
+            `Welcome, ${
+              user?.first_name[0]?.toUpperCase() + user?.first_name.slice(1)
+            }!`
+          );
+          sendAnalytics("user_login", {});
+          navigate("/dashboard", {
+            replace: true,
+          });
+        } else {
+          toast.success("Registration successful! Please log in.");
+          navigate("/login", {
+            replace: true,
+          });
+        }
       }
     } catch (error) {
       logger("Error while signing in: ", error);

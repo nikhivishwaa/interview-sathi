@@ -74,12 +74,12 @@ const LoginScreen = () => {
       handleSignIn();
     }
   };
-  async function handleSignIn(idToken = null) {
+  async function handleSignIn() {
     try {
       const apiUrl = import.meta.env.VITE_BACKEND;
       const response = await axios.post(
-        `${apiUrl}/users/login/${idToken ? "sso/" : ""}`,
-        idToken ? { id_token: idToken } : { email, password },
+        `${apiUrl}/users/login/`,
+        { email, password },
         {
           headers: {
             "Content-Type": "application/json",
@@ -114,6 +114,7 @@ const LoginScreen = () => {
       setSubmitting(false);
     }
   }
+
   async function loginWithGoogle() {
     setSubmitting(true);
     setIsSSO(true);
@@ -127,7 +128,57 @@ const LoginScreen = () => {
     console.log({ idToken });
 
     // authenticating with backend
-    await handleSignIn(idToken);
+    try {
+      const apiUrl = import.meta.env.VITE_BACKEND;
+      const response = await axios.post(
+        `${apiUrl}/users/login/sso/`,
+        { id_token: idToken },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.status === 200) {
+        const { access, refresh, user } = response.data.data;
+        secureLocalStorage.setItem("token", access);
+        secureLocalStorage.setItem("refresh_token", refresh);
+        updateUser(user);
+        secureLocalStorage.setItem("lastLogin", new Date().getTime());
+        initiateAuthConfirmation();
+        toast.success(
+          `Welcome, ${
+            user?.first_name[0]?.toUpperCase() + user?.first_name.slice(1)
+          }!`
+        );
+        sendAnalytics("user_login", {});
+        navigate("/dashboard", {
+          replace: true,
+        });
+      } else if (response.status === 202) {
+        const { displayName, email, photoUrl } = user;
+        const userData = {}
+        userData.email =email;
+        const [fn, ...ln] = displayName.split(' ')
+        userData.first_name = fn;
+        userData.last_name = ln.join(' ')
+        userData.verified = true;
+        
+        toast.info(`Complete the Signup, ${user?.displayName}!`);
+        sendAnalytics("new_user_sso", {});
+        navigate("/register", {
+          replace: true,
+          state: { userData, sso: true },
+        });
+      }
+    } catch (error) {
+      logger("Error while signing in: ", error);
+      logger(error.response.status);
+      if (error.response.status === 400) toast.error("Invalid Credentials!");
+      else toast.error("Something went wrong. Try again!");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -266,7 +317,7 @@ const LoginScreen = () => {
                 Sign in
               </button>
             </div>
-            
+
             <div>
               <button
                 disabled={submitting}
@@ -274,7 +325,11 @@ const LoginScreen = () => {
                 className="sathi-btn-secondary w-full"
               >
                 {submitting && isSSO ? spinner : null}
-                <img src="/icons/google.png" alt="google" className="h-5 w-5 inline-block mr-2" />
+                <img
+                  src="/icons/google.png"
+                  alt="google"
+                  className="h-5 w-5 inline-block mr-2"
+                />
                 Sign in with Google
               </button>
             </div>
