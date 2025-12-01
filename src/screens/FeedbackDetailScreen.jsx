@@ -10,12 +10,15 @@ import {
 import AnalyticsTracker from "../components/AnalyticsTracker";
 import { sendAnalytics } from "../utils/firebase";
 import logger from "../utils/logger";
+import PDFViewer from "../components/PDFViewer";
+import { ArrowDown, Download, Eye } from "lucide-react";
 
 const FeedbackDetailScreen = () => {
   const { id } = useParams();
   const route = useLocation();
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [previewFile, setPreviewFile] = useState("");
   const { token, apiUrl } = useAuth();
 
   useEffect(() => {
@@ -23,7 +26,7 @@ const FeedbackDetailScreen = () => {
       try {
         logger({ token });
         setLoading(true);
-        const response = await axios.get(`${apiUrl}/feedback/${id}/`, {
+        const response = await axios.get(`${apiUrl}/feedbacks/${id}/`, {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -34,30 +37,35 @@ const FeedbackDetailScreen = () => {
           const { data } = response.data;
 
           if (route?.state?.lazyload) {
+            const m = data?.metadata;
             sendAnalytics("feedback_generated", {
               interview_id: id,
-              overall_score: data.overall_score || 0,
-              technical: data.scores?.technical || 0,
-              communication: data.scores?.communication || 0,
-              grammar: data.scores?.grammar || 0,
-              relevance: data.scores?.relevance || 0,
+              overall_score: m.overall_score || 0,
+              technical: m.scores?.technical || 0,
+              communication: m.scores?.communication || 0,
+              relevance: m.scores?.relevance || 0,
+              confidence: m.scores?.confidence || 0,
+              culture_fit: m?.scores?.culture_fit || 0,
+              skills: Object.keys(m.skills),
+              traits: Object.keys(m.traits),
             });
           }
           // Create a mock feedback for demonstration
-          const mockFeedback = {
-            id,
-            overallScore: data.overall_score || 0,
-            technicalScore: data.scores?.technical || 0,
-            communicationScore: data.scores?.communication || 0,
-            grammarScore: data.scores?.grammar || 0,
-            relevanceScore: data.scores?.relevance || 0,
-            strengths: data.strengths || [],
-            improvements: data.improvements || [],
-            detailedFeedback: data.detailed_feedback || "",
-            behavioralFeedback: data.behavioral_feedback || "",
-          };
+          // const mockFeedback = {
+          //   id,
+          //   overallScore: data.overall_score || 0,
+          //   technicalScore: data.scores?.technical || 0,
+          //   communicationScore: data.scores?.communication || 0,
+          //   grammarScore: data.scores?.grammar || 0,
+          //   relevanceScore: data.scores?.relevance || 0,
+          //   strengths: data.strengths || [],
+          //   improvements: data.improvements || [],
+          //   detailedFeedback: data.detailed_feedback || "",
+          //   behavioralFeedback: data.behavioral_feedback || "",
+          // };
 
-          setFeedback(mockFeedback);
+          // setFeedback(mockFeedback);
+          setFeedback(data);
         }
       } catch (error) {
         console.error("Error fetching feedback:", error);
@@ -68,8 +76,9 @@ const FeedbackDetailScreen = () => {
       }
     };
 
-    if (route?.state?.lazyload) setTimeout(fetchFeedback, 10000);
-    else fetchFeedback();
+    // if (route?.state?.lazyload) setTimeout(fetchFeedback, 10000);
+    // else fetchFeedback();
+    fetchFeedback();
   }, []);
 
   if (loading) {
@@ -161,17 +170,17 @@ const FeedbackDetailScreen = () => {
 
                   <div className="flex items-center mb-4">
                     <div className="w-14 h-14 rounded-full bg-sathi-primary flex items-center justify-center text-white font-bold text-lg">
-                      {feedback.overallScore}%
+                      {Math.round(feedback.metadata.overall_score)}%
                     </div>
                     <div className="ml-4">
                       <div className="font-medium text-gray-900">
-                        {feedback.overallScore >= 90
+                        {feedback?.metadata?.overall_score >= 90
                           ? "Excellent"
-                          : feedback.overallScore >= 75
+                          : feedback?.metadata?.overall_score >= 75
                           ? "Good"
-                          : feedback.overallScore >= 50
+                          : feedback?.metadata?.overall_score >= 50
                           ? "Average"
-                          : feedback.overallScore > 20
+                          : feedback?.metadata?.overall_score > 20
                           ? "Needs Improvement"
                           : "Poor"}
                       </div>
@@ -182,136 +191,140 @@ const FeedbackDetailScreen = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm text-gray-700">Technical</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {feedback.technicalScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-sathi-primary rounded-full h-2"
-                          style={{ width: `${feedback.technicalScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm text-gray-700">
-                          Communication
-                        </span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {feedback.communicationScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-sathi-primary rounded-full h-2"
-                          style={{ width: `${feedback.communicationScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm text-gray-700">Relevance</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {feedback.relevanceScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-sathi-primary rounded-full h-2"
-                          style={{ width: `${feedback.relevanceScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm text-gray-700">Grammar</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          {feedback.grammarScore}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-sathi-primary rounded-full h-2"
-                          style={{ width: `${feedback.grammarScore}%` }}
-                        ></div>
-                      </div>
-                    </div>
+                    {Object.keys(feedback?.metadata?.scores)?.map(
+                      (parameter, key) => (
+                        <div key={key}>
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="text-sm text-gray-700 capitalize">
+                              {parameter.replaceAll("_", " ")}
+                            </span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {Math.round(
+                                feedback.metadata.scores[parameter] * 10
+                              ) / 10}
+                              %
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-sathi-primary rounded-full h-2"
+                              style={{
+                                width: `${feedback.metadata.scores[parameter]}%`,
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
 
               <div className="w-full md:w-1/2 px-4 mb-6">
                 <div className="h-full">
-                  {feedback.strengths.length > 0 && (
+                  {feedback.report && (
                     <h3 className="font-medium text-gray-900 mb-3">
-                      Strengths
+                      Detailed Feedback Report
                     </h3>
                   )}
-                  <ul className="space-y-2 mb-6">
-                    {feedback.strengths.map((strength, index) => (
-                      <li key={index} className="flex items-start">
-                        {feedbackStrengthSvg}
-                        <span className="text-sm text-gray-700">
-                          {strength}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                  <span className="flex justify-center mb-4 items-center w-full rounded-md h-40 bg-gray-100">
+                    {/* <span className="flex flex-wrap w-1/2 rounded-md h-40 bg-gray-100"> */}
+                    {/* {Object.keys(feedback.metadata.skills).map((skill, key) => (
+                      <span className="rounded-full text-black p-2 px-4 bg-blue-100">
+                        {skill.replaceAll(/[-_]+/g, " ")}
+                      </span>
+                    ))} */}
+                    <img
+                      src="/icons/report.png"
+                      alt="report"
+                      className="block h-[80%]"
+                    />
+                  </span>
+                  <div className="flex gap-4 justify-center items-center">
+                    <button
+                      className="sathi-btn-primary inline-flex p-1 px-3"
+                      onClick={() => {
+                        const reportUrl = feedback.report;
+                        const a = document.createElement("a");
+                        a.href = reportUrl;
+                        a.download = `Feedback Report - ${new Date().toDateString()}.pdf`;
+                        a.target = "_blank";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }}
+                    >
+                      <ArrowDown className="w-5 h-5 font-bold mr-2" /> Download
+                    </button>
+                    <button
+                      className="sathi-btn-primary inline-flex p-1 px-3"
+                      onClick={() => setPreviewFile(feedback?.report)}
+                    >
+                      <Eye className="w-5 h-5 font-bold mr-2" /> Preview
+                    </button>
+                  </div>
+                  <div className="h-full">
+                    {feedback?.strengths?.length > 0 && (
+                      <h3 className="font-medium text-gray-900 mb-3">
+                        Strengths
+                      </h3>
+                    )}
+                    <ul className="space-y-2 mb-6">
+                      {feedback?.strengths?.map((strength, index) => (
+                        <li key={index} className="flex items-start">
+                          {feedbackStrengthSvg}
+                          <span className="text-sm text-gray-700">
+                            {strength}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
 
-                  {feedback.improvements?.length > 0 && (
-                    <h3 className="font-medium text-gray-900 mb-3">
-                      Areas for Improvement
-                    </h3>
-                  )}
-                  <ul className="space-y-2">
-                    {feedback.improvements.map((improvement, index) => (
-                      <li key={index} className="flex items-start">
-                        {feedbackImpovementSvg}
-                        <span className="text-sm text-gray-700">
-                          {improvement}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+                    {feedback?.improvements?.length > 0 && (
+                      <h3 className="font-medium text-gray-900 mb-3">
+                        Areas for Improvement
+                      </h3>
+                    )}
+                    <ul className="space-y-2">
+                      {feedback?.improvements?.map((improvement, index) => (
+                        <li key={index} className="flex items-start">
+                          {feedbackImpovementSvg}
+                          <span className="text-sm text-gray-700">
+                            {improvement}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
+
+              {feedback?.behavioralFeedback && (
+                <div className="border-t border-gray-200 pt-6 mt-2">
+                  <h3 className="font-medium text-gray-900 mb-3">
+                    Behavioral Feedback
+                  </h3>
+                  <p className="text-sm text-gray-700 whitespace-pre-line">
+                    {feedback?.behavioralFeedback}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {feedback?.behavioralFeedback && (
-              <div className="border-t border-gray-200 pt-6 mt-2">
-                <h3 className="font-medium text-gray-900 mb-3">
-                  Behavioral Feedback
-                </h3>
-                <p className="text-sm text-gray-700 whitespace-pre-line">
-                  {feedback?.behavioralFeedback}
-                </p>
-              </div>
-            )}
-            <div className="border-t border-gray-200 pt-6 mt-2">
-              <h3 className="font-medium text-gray-900 mb-3">
-                Detailed Feedback
-              </h3>
-              <p className="text-sm text-gray-700 whitespace-pre-line">
-                {feedback?.detailedFeedback}
-              </p>
+            <div className="text-center mt-8">
+              <Link
+                to="/interviews/schedule"
+                className="sathi-btn-primary inline-flex"
+              >
+                Schedule Another Interview
+              </Link>
             </div>
-          </div>
-
-          <div className="text-center mt-8">
-            <Link
-              to="/interviews/schedule"
-              className="sathi-btn-primary inline-flex"
-            >
-              Schedule Another Interview
-            </Link>
           </div>
         </div>
       </div>
+      {previewFile && (
+        <PDFViewer fileUrl={previewFile} onClose={() => setPreviewFile("")} />
+      )}
     </main>
   );
 };

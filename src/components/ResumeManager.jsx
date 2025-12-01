@@ -25,6 +25,9 @@ const ResumeUpload = ({
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [validationStep, setValidationStep] = useState(0);
+  const failedReason = useRef("");
+
   const fileInputRef = useRef(null);
   const { apiUrl, token } = useAuth();
 
@@ -74,6 +77,10 @@ const ResumeUpload = ({
               (progressEvent.loaded * 100) / progressEvent.total
             );
             setUploadProgress(percent);
+            console.log({ percent, progressEvent });
+            if (percent >= 100) {
+              setTimeout(() => setValidationStep(1), 1100);
+            }
           }
         },
       });
@@ -86,6 +93,7 @@ const ResumeUpload = ({
         });
         updateResumes(data);
         toast.success("Resume uploaded successfully");
+        setValidationStep(0);
       }
 
       setFile(null);
@@ -93,7 +101,9 @@ const ResumeUpload = ({
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
       console.error("Error uploading resume:", error);
-      toast.error("Failed to upload resume");
+      failedReason.current = error?.response?.data?.message;
+      // toast.error("Failed to upload resume");
+      setValidationStep(2);
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -103,67 +113,92 @@ const ResumeUpload = ({
   return (
     <CustomModal isOpen={uploadModalOpen} setIsOpen={setUploadModalOpen}>
       <h4 className="text-lg font-semibold mb-4">Upload Resume</h4>
-      <div
-        className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 cursor-pointer transition hover:bg-gray-100"
-        onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          className="hidden"
-          accept=".pdf"
-          onChange={handleFileChange}
-          ref={fileInputRef}
-        />
-        <p className="text-gray-600">
-          Drag & Drop or <span className="text-blue-600">Click to Select</span>{" "}
-          your resume (PDF, max 5MB)
-        </p>
-      </div>
-
-      {file && (
-        <motion.div
-          className="mt-4 space-y-3"
-          initial={{ y: 50, opacity: 0, scale: 0.95 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 30, opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          <p className="text-sm text-gray-600">Selected: {file.name}</p>
-
-          {uploading && (
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-blue-600 h-2 transition-all duration-300"
-                style={{ width: `${uploadProgress}%` }}
-              ></div>
-            </div>
-          )}
-
-          <div className="flex justify-end items-center gap-4">
-            <button
-              onClick={() => fileInputRef.current.click()}
-              disabled={uploading || !file}
-              className="mt-2 sathi-btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Change
-            </button>
-            <button
-              onClick={handleUpload}
-              disabled={uploading || !file}
-              className="mt-2 sathi-btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {uploading ? (
-                <>
-                  <Spinner className="animate-spin w-4 h-4" /> Uploading…
-                </>
-              ) : (
-                "Upload"
-              )}
-            </button>
+      {!validationStep ? (
+        <>
+          <div
+            className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center bg-gray-50 cursor-pointer transition hover:bg-gray-100"
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              className="hidden"
+              accept=".pdf"
+              onChange={handleFileChange}
+              ref={fileInputRef}
+            />
+            <p className="text-gray-600">
+              Drag & Drop or{" "}
+              <span className="text-blue-600">Click to Select</span> your resume
+              (PDF, max 5MB)
+            </p>
           </div>
-        </motion.div>
+
+          {file && (
+            <motion.div
+              className="mt-4 space-y-3"
+              initial={{ y: 50, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 30, opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <p className="text-sm text-gray-600">Selected: {file.name}</p>
+
+              {uploading && (
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-2 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+              )}
+
+              <div className="flex justify-end items-center gap-4">
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={uploading || !file}
+                  className="mt-2 sathi-btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Change
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !file}
+                  className="mt-2 sathi-btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <>
+                      <Spinner className="animate-spin w-4 h-4" /> Uploading…
+                    </>
+                  ) : (
+                    "Upload"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </>
+      ) : validationStep == 1 ? (
+        <div className="flex gap-5 p-4 py-10 justify-center rounded-md border-2 border-dashed border-orange-400">
+          <Spinner className="animate-spin w-6 h-6" /> Validating Your Resume
+        </div>
+      ) : (
+        <div className="flex flex-col gap-5 p-4 pb-2 bg-[#fff9f9] rounded-2xl justify-center items-center ">
+          <img src="/icons/warning.png" alt="Warning" className="w-20 h-20" />
+          <span>{failedReason.current}</span>
+          <button
+            onClick={() => {
+              setFile(null);
+              setUploadModalOpen(false);
+              setValidationStep(0);
+            }}
+            disabled={uploading}
+            className="self-center sathi-btn-secondary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Close
+          </button>
+        </div>
       )}
     </CustomModal>
   );
@@ -304,9 +339,9 @@ const ResumeManager = () => {
                   "linear-gradient(86deg, #F0F8FF 1.71%, #FFFCEF 99.56%)",
               }}
               transition={{ duration: 0.25 }}
-               className={`relative p-5 rounded-2xl shadow-sm border bg-white  border-[#dcdcdc] group ${
-    openMenuId === resume.id ? "z-50" : "z-0"
-  }`}
+              className={`relative p-5 rounded-2xl shadow-sm border bg-white  border-[#dcdcdc] group ${
+                openMenuId === resume.id ? "z-50" : "z-0"
+              }`}
             >
               {/* Resume Info */}
               <div
@@ -460,4 +495,3 @@ const ResumeManager = () => {
 };
 
 export default ResumeManager;
-

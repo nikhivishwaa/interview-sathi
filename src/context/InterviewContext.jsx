@@ -7,6 +7,7 @@ const InterviewContext = createContext(undefined);
 
 export const InterviewProvider = ({ children }) => {
   const [interviews, setInterviews] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [resumes, setResumes] = useState([]);
   const { isAuthenticated, token, apiUrl } = useAuth();
 
@@ -27,6 +28,25 @@ export const InterviewProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("Error fetching interviews:", error);
+    }
+  };
+  const getFeedbacks = async () => {
+    try {
+      const response = await axios.get(`${apiUrl}/feedbacks/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.status === 200) {
+        setFeedbacks(response.data?.data || []);
+        secureLocalStorage.setItem(
+          "feedbacks",
+          JSON.stringify(response.data?.data || [])
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching feedbacks:", error);
     }
   };
 
@@ -55,13 +75,18 @@ export const InterviewProvider = ({ children }) => {
       const interviewList = JSON.parse(
         secureLocalStorage.getItem("interviews")
       );
+      const feedbackList = JSON.parse(
+        secureLocalStorage.getItem("feedbacks")
+      );
       const resumeList = JSON.parse(secureLocalStorage.getItem("resumes"));
 
       if (interviewList) setInterviews(interviewList);
+      if (feedbackList) setFeedbacks(feedbackList);
       if (resumeList) setResumes(resumeList);
 
       // refresh in background for fresh data
       getInterviews();
+      getFeedbacks()
       getResumes();
     } catch (error) {
       console.error("Error loading cached data:", error);
@@ -81,10 +106,13 @@ export const InterviewProvider = ({ children }) => {
   const value = {
     resumes,
     interviews,
+    feedbacks,
     setInterviews,
     setResumes,
+    setFeedbacks,
     getInterviews,
     getResumes,
+    getFeedbacks
   };
 
   return (

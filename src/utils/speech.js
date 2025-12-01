@@ -1,5 +1,3 @@
-import logger from "./logger";
-
 // Initialize speech recognition
 export const initSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -10,7 +8,7 @@ export const initSpeechRecognition = () => {
   
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.interimResults = true;
+    recognition.interimResults = false;
     recognition.lang = 'en-US';
   
     return recognition;
@@ -22,8 +20,6 @@ export const initSpeechRecognition = () => {
       const resultIndex = event.resultIndex;
       const transcript = event.results[resultIndex][0].transcript;
       const isFinal = event.results[resultIndex].isFinal;
-      logger({event})
-  
       onResult(transcript, isFinal);
     };
   
