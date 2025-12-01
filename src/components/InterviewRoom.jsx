@@ -11,6 +11,7 @@ import VideoRecorder from "./VideoRecorder";
 import { CheckIcon } from "../data/SvgImageData";
 import { sendAnalytics } from "../utils/firebase";
 import logger from "../utils/logger";
+import { MicOff, Mic } from "lucide-react";
 
 const API = import.meta.env.VITE_BACKEND;
 const WS_API = import.meta.env.VITE_WS;
@@ -57,6 +58,16 @@ const InterviewRoom = () => {
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
+        if (data.type === "no_more_questions") {
+          sendAnalytics("interview_winded_up", {
+            interview_id: id,
+            duration: elapsedTime,
+            total_qna: parseInt(history.length / 2),
+          });
+
+          handleEndInterview(false);
+          return;
+        }
         if (data.type === "interview_ended") {
           toast.success("Interview ended! Redirecting to feedback...");
           sendAnalytics("interview_ended", {
@@ -65,7 +76,7 @@ const InterviewRoom = () => {
             total_qna: parseInt(history.length / 2),
           });
 
-          navigate(data.redirect, { replace: true });
+          navigate(data.redirect, { replace: true, state: { lazyload: true } });
           return;
         }
 
@@ -160,13 +171,14 @@ const InterviewRoom = () => {
       question: currentQuestion,
       answer: transcript.trim(),
     };
+    setTranscript("");
+    setCurrentQuestion("")
     setHistory((h) => [...h, lastQuestion]);
 
-    setTranscript("");
     setSubmitting(false);
   };
 
-  const handleEndInterview = () => {
+  const handleEndInterview = (ended_by_user = true) => {
     if (!socketRef.current) return;
 
     setEnding(true);
@@ -184,13 +196,15 @@ const InterviewRoom = () => {
         type: "end_interview",
       })
     );
-    sendAnalytics("interview_ended_by_user", {
-      interview_id: id,
-      duration: elapsedTime,
-      total_qna: parseInt(history.length / 2),
-    });
-    setOngoing(false);
-    navigate(`/feedback/${id}`, { replace: true, state: { lazyload: true } });
+    if (ended_by_user) {
+      sendAnalytics("interview_ended_by_user", {
+        interview_id: id,
+        duration: elapsedTime,
+        total_qna: parseInt(history.length / 2),
+      });
+      setOngoing(false);
+      navigate(`/feedback/${id}`, { replace: true, state: { lazyload: true } });
+    }
   };
 
   if (loading) {
@@ -277,18 +291,18 @@ const InterviewRoom = () => {
         <div className="lg:col-span-2">
           {/* Conversation Area */}
           <section className="sathi-card h-fit mb-6 flex flex-col">
-            <div className="flex-1 max-h-[45vh]  overflow-y-scroll p-4">
-              <div className="space-y-4">
+            <div className="flex-1 max-h-[48vh]  overflow-y-scroll p-4">
+              <main className="space-y-4">
                 {history.length >= 1 &&
                   history.map(({ question, answer }, key) => (
-                    <>
+                    <div key={key} className="flex flex-col w-full gap-3">
                       <section
-                        key={"Q_" + key}
+                        key={"Q" + key}
                         className="flex gap-3 items-start"
                       >
-                        <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
+                        <span className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
                           AI
-                        </div>
+                        </span>
                         <div
                           className="bg-gray-100 p-3 max-w-[80%]"
                           style={{ borderRadius: "0px 8px 8px 8px" }}
@@ -310,36 +324,78 @@ const InterviewRoom = () => {
                           You
                         </div>
                       </section>
-                      <section className="my-6 w-8/12 mx-auto justify-center rounded-full h-[2px] bg-gray-100"></section>
-                    </>
+                      <section
+                        key={"d_" + key}
+                        className="my-6 w-8/12 mx-auto justify-center rounded-full h-[2px] bg-gray-100"
+                      ></section>
+                    </div>
                   ))}
                 {/* AI Question */}
-                <section className="flex gap-3 items-start">
-                  <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
-                    AI
-                  </div>
-                  <div
-                    className="bg-gray-100 p-3 max-w-[80%]"
-                    style={{ borderRadius: "0px 8px 8px 8px" }}
-                  >
-                    <p className="text-sm text-gray-800">{currentQuestion}</p>
-                  </div>
-                </section>
-                {/* My Answer */}
-                {transcript && (
-                  <section className="flex items-end gap-3 justify-end">
+                <div key={'ongoing'} className="flex flex-col w-full gap-3">
+                  <section key={"qc"} className="flex gap-3 items-start w-full">
+                    <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
+                      AI
+                    </div>
                     <div
                       className="bg-gray-100 p-3 max-w-[80%]"
-                      style={{ borderRadius: "8px 8px 0px 8px" }}
+                      style={{ borderRadius: "0px 8px 8px 8px" }}
                     >
-                      <p className="text-sm text-gray-800">{transcript}</p>
-                    </div>
-                    <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
-                      You
+                      {currentQuestion ? (
+                        <p className="text-sm text-gray-800">
+                          {currentQuestion}
+                        </p>
+                      ) : (
+                        <>
+                          <span className="block w-70 h-4 bg-blue-200 mb-1 rounded-full animate-pulse"></span>
+                          <span className="block w-58 h-4 bg-blue-100 mb-1 rounded-full animate-pulse"></span>
+                          <span className="block w-54 h-4 bg-blue-100 rounded-full animate-pulse"></span>
+                        </>
+                      )}
                     </div>
                   </section>
-                )}
-              </div>
+                  {/* My Answer */}
+                  {isListening && (
+                    <section
+                      key={"acl"}
+                      className="flex items-end gap-3 justify-end w-full"
+                    >
+                      <div
+                        className="bg-gray-100 p-3 max-w-[80%]"
+                        style={{ borderRadius: "8px 8px 0px 8px" }}
+                      >
+                        <span className="block w-70 h-4 mb-1 bg-gradient-to-r from-[#e712ff] to-[#fdd1ff] rounded-full animate-pulse"></span>
+                        <span className="block w-58 h-4 bg-gradient-to-r from-[#b412ff] to-[#f0d1ff] rounded-full animate-pulse"></span>
+                      </div>
+                      <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
+                        You
+                      </div>
+                    </section>
+                  )}
+                  {!isListening && transcript && (
+                    <section
+                      key={"ac"}
+                      className="flex items-end gap-3 justify-end w-full"
+                    >
+                      <div
+                        className="bg-gray-100 p-3 w-[80%]"
+                        style={{ borderRadius: "8px 8px 0px 8px" }}
+                      >
+                        <textarea
+                          className="text-sm text-gray-800 focus:outline-0 w-full bg-white p-2 text-[14px]"
+                          value={transcript}
+                          rows={20}
+                          onChange={(e) => setTranscript(e.target.value)}
+                        >
+                          {transcript}
+                        </textarea>
+                      </div>
+                      <div className="h-8 w-8 rounded-full bg-sathi-primary flex items-center justify-center text-white text-xs">
+                        You
+                      </div>
+                    </section>
+                  )}
+                </div>
+              </main>
             </div>
           </section>
 
@@ -390,20 +446,7 @@ const InterviewRoom = () => {
                       : "bg-gray-500 text-white"
                   } disabled:opacity-50`}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
+                  {isListening ? <Mic /> : <MicOff />}
                 </button>
                 <span className="ml-3 text-sm font-medium text-gray-700">
                   {isListening ? "Unmute" : "Mute"}
@@ -417,26 +460,7 @@ const InterviewRoom = () => {
               >
                 {submitting ? (
                   <>
-                    <svg
-                      className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Spinner className="w-4 h-4 animate-spin" />
                     sending...
                   </>
                 ) : (

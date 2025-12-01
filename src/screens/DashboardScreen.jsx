@@ -14,7 +14,7 @@ import ResumeManager from "../components/ResumeManager";
 
 const DashboardScreen = () => {
   const { user, getAuthHeader, apiUrl } = useAuth();
-  const { interviews, getInterviews, setInterviews } = useInterview();
+  const { interviews, getInterviews, setInterviews, feedbacks, getFeedbacks } = useInterview();
   const [loading, setLoading] = useState(true);
   const [totalInterviews, setTotalInterviews] = useState(0);
   const [completedInterviews, setCompletedInterviews] = useState(0);
@@ -23,6 +23,7 @@ const DashboardScreen = () => {
 
   useEffect(() => {
     fetchInterviews();
+    fetchFeedbacks()
   }, []);
 
   const fetchInterviews = async () => {
@@ -33,6 +34,18 @@ const DashboardScreen = () => {
     } catch (error) {
       console.error("Error fetching interviews:", error);
       toast.error("Failed to load your interviews");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchFeedbacks = async () => {
+    try {
+      setLoading(true);
+      const data = await getFeedbacks();
+      logger({ data });
+    } catch (error) {
+      console.error("Error fetching feedbacks:", error);
+      toast.error("Failed to load your feedbacks");
     } finally {
       setLoading(false);
     }
@@ -76,17 +89,14 @@ const DashboardScreen = () => {
     ).length;
 
     // Calculate average score
-    const interviewsWithFeedback = interviews.filter(
-      (interview) => interview.metadata?.feedback
-    );
     const averageScore_ =
-      interviewsWithFeedback.length > 0
+      feedbacks.length > 0
         ? Math.round(
-            interviewsWithFeedback.reduce(
-              (sum, interview) =>
-                sum + (interview?.metadata?.feedback?.overall_score || 0),
+            feedbacks.reduce(
+              (sum, feedback) =>
+                sum + (feedback?.metadata.overall_score || 0),
               0
-            ) / interviewsWithFeedback.length
+            ) / feedbacks.length
           )
         : undefined;
 
@@ -99,7 +109,7 @@ const DashboardScreen = () => {
   return (
     <main className="bg-gray-50">
       <AnalyticsTracker screenName="DashboardScreen" />
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8  w-10/12">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
@@ -109,7 +119,7 @@ const DashboardScreen = () => {
             className="flex rounded-lg bg-white shadow-md p-2 cursor-pointer hover:bg-gray-50 transition duration-200 ease-in-out"
             onClick={() => {
               fetchInterviews();
-              toast.success("Interviews Refreshed");
+              toast.success("Dashboard Refreshed");
             }}
           >
             {/* <RenderSvg svgName={refreshIconSvg} /> */}
@@ -135,9 +145,7 @@ const DashboardScreen = () => {
             />
 
             <RecentFeedback
-              interviews={interviews.filter(
-                (interview) => interview.status === "completed"
-              )}
+              feedbacks={feedbacks}
               loading={loading}
             />
           </div>

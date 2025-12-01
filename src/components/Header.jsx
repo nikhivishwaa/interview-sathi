@@ -4,6 +4,13 @@ import { useAuth } from "../context/AuthContext";
 import secureLocalStorage from "react-secure-storage";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import {
+  CodeIcon,
+  LayoutDashboardIcon,
+  LogOut,
+  MessageCircleReply,
+  UserRound,
+} from "lucide-react";
 
 const Header = () => {
   const { initiateAuthConfirmation, user, isAuthenticated, logout } = useAuth();
@@ -16,12 +23,16 @@ const Header = () => {
   // Navigation links for authenticated users
   const links = isAuthenticated
     ? [
-        { name: "Dashboard", path: "/dashboard" },
-        { name: "Jobs", path: "/jobs" },
-        { name: "Practice", path: "/practice" },
-        { name: "Feedbacks", path: "/feedback" },
-        { name: "Quizzes", path: "/quizzes" },  // <-- Added Quiz link
-        { name: "Profile", path: "/profile" },
+        {
+          name: "Dashboard",
+          path: "/dashboard",
+          icon: <LayoutDashboardIcon />,
+        },
+        // { name: "Jobs", path: "/jobs" },
+        { name: "Practice", path: "/practice", icon: <CodeIcon /> },
+        { name: "Feedbacks", path: "/feedback", icon: <MessageCircleReply /> },
+        // { name: "Quizzes", path: "/quizzes" },  // <-- Added Quiz link
+        { name: "Profile", path: "/profile", icon: <UserRound /> },
       ]
     : [];
 
@@ -51,39 +62,40 @@ const Header = () => {
               <MotionLink
                 key={idx}
                 to={link.path}
-                className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:text-sathi-primary transition-colors duration-300"
-                whileHover={{ scale: 1.05 }}
+                className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:text-sathi-primary transition-colors duration-100"
+                whileHover={{ scale: 1.02 }}
               >
-                {link.name}
+                <div className="flex gap-2">
+                  <span>{link.icon}</span>
+                  <span>{link.name}</span>
+                </div>
               </MotionLink>
             ))}
 
           {isAuthenticated && (
             <MotionButton
               onClick={logout}
-              className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:text-red-500 transition-colors duration-300"
-              whileHover={{ scale: 1.05 }}
+              className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:text-red-500 transition-colors duration-100"
+              whileHover={{ scale: 1.02 }}
             >
-              Logout
+              <div className="flex gap-2">
+                <span>
+                  <LogOut />
+                </span>
+                <span>Logout</span>
+              </div>
             </MotionButton>
           )}
 
           {!isAuthenticated && (
             <>
-              <MotionLink
-                to="/login"
-                className="px-4 py-2 rounded-lg text-gray-700 font-medium hover:text-sathi-primary transition-colors duration-300"
-                whileHover={{ scale: 1.05 }}
-              >
-                Login
-              </MotionLink>
-              <MotionLink
-                to="/register"
-                className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-400 to-pink-600 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
-              >
+              <Link to="/login" className="sathi-btn-secondary flex gap-3">
+                <img src="/icons/google.png" alt="google" className="w-5 h-5" />
+                <span>Login</span>
+              </Link>
+              <Link to="/register" className="sathi-btn-primary">
                 Register
-              </MotionLink>
+              </Link>
             </>
           )}
         </nav>

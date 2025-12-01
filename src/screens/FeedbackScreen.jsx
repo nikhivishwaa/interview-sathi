@@ -14,7 +14,7 @@ import PDFViewer from "../components/PDFViewer";
 import { useAuth } from "../context/AuthContext";
 
 export default function FeedbackScreen() {
-  const { interviews, resumes } = useInterview();
+  const { interviews, feedbacks, resumes } = useInterview();
   const [previewResume, setPreviewResume] = useState(null);
   const { apiUrl } = useAuth();
 
@@ -26,11 +26,17 @@ export default function FeedbackScreen() {
     logger({ obj, interviews });
     return obj;
   };
+  const getInterviewMap = (interviewList) => {
+    const obj = {};
+    for (const interview of interviewList) {
+      obj[`i${interview.id}`] = interview;
+    }
+    logger({ obj, interviews });
+    return obj;
+  };
 
   const resumeMap = getResumeMap(resumes);
-  const feedbacks = interviews.filter(
-    (i) => i.status === "completed" && i.metadata?.feedback
-  );
+  const interviewMap = getInterviewMap(interviews);
 
   // Filters state
   const [topN, setTopN] = useState(10);
@@ -47,7 +53,9 @@ export default function FeedbackScreen() {
     }
     if (toDate) {
       list = list.filter(
-        (i) => new Date(i.created_at) <= new Date(new Date(toDate).getTime() + 24*3600*1000)
+        (i) =>
+          new Date(i.created_at) <=
+          new Date(new Date(toDate).getTime() + 24 * 3600 * 1000)
       );
     }
 
@@ -112,71 +120,80 @@ export default function FeedbackScreen() {
 
         {/* Feedback Cards */}
         <div className="space-y-8">
-          {filteredFeedbacks.map((interview) => (
-            <div
-              key={interview.id}
-              className="relative group bg-gradient-to-r from-gray-50 to-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-200 p-6"
-            >
-              {/* Header Row */}
-              <div className="flex justify-between items-center">
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800">
-                    Feedback for{" "}
-                    <span className="text-indigo-600">
-                      Interview #{interview.id}
-                    </span>
-                  </h2>
-                  <p className="text-sm text-gray-500 flex items-center mt-1">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    {new Date(interview.created_at).toLocaleString()}
-                  </p>
-                </div>
+          {filteredFeedbacks.map((feedback) => {
+            const interview = interviewMap[`i${feedback.session}`];
+            const resume = resumeMap[`r${interview.resume}`];
+            return (
+              <div
+                key={feedback.id}
+                className="relative group bg-gradient-to-r from-gray-50 to-white rounded-2xl shadow-sm hover:shadow-md transition-all border border-gray-200 p-6"
+              >
+                {/* Header Row */}
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                      Feedback for{" "}
+                      <span className="text-indigo-600 capitalize">
+                        Interview #{interview.role}
+                      </span>
+                    </h2>
+                    <p className="text-sm text-gray-500 flex items-center mt-1">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      {new Date(feedback.created_at).toLocaleString()}
+                    </p>
+                  </div>
 
-                {/* View button */}
-                <Link
-                  to={`/feedback/${interview.id}`}
-                  className="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition"
-                >
-                  View Details <ArrowRight className="ml-1 h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* Info Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-5">
-                <div className="flex items-center space-x-3">
-                  <ClipboardList className="h-5 w-5 text-indigo-500" />
-                  <span className="text-gray-700">
-                    Score:{" "}
-                    <span className="font-semibold">
-                      {interview.metadata?.feedback?.overall_score ?? "N/A"}/100
-                    </span>
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-indigo-500" />
-                  <button
-                    onClick={() =>
-                      setPreviewResume(resumeMap[`r${interview.resume}`])
-                    }
-                    className="text-gray-700 hover:text-indigo-600 font-medium"
+                  {/* View button */}
+                  <Link
+                    to={`/feedback/${feedback.id}`}
+                    className="inline-flex items-center text-indigo-600 font-medium hover:text-indigo-800 transition"
                   >
-                    Resume #{resumeMap[`r${interview.resume}`].name}
-                  </button>
+                    View Details <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <ClipboardList className="h-5 w-5 text-indigo-500" />
+                {/* Info Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-5">
+                  <div className="flex items-center space-x-3">
+                    <ClipboardList className="h-5 w-5 text-indigo-500" />
+                    <span className="text-gray-700">
+                      Score:{" "}
+                      <span className="font-semibold">
+                        {Math.round(feedback?.metadata?.overall_score) ?? "N/A"}
+                        /100
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-5 w-5 text-indigo-500" />
+                    <button
+                      onClick={() => setPreviewResume(resume.file)}
+                      className="text-gray-700 hover:text-indigo-600 font-medium"
+                    >
+                      Resume #{resume?.name}
+                    </button>
+                  </div>
+
+                  {/* <div className="flex items-center space-x-3">
                   <span className="capitalize text-gray-700 hover:text-indigo-600 font-medium">
                     {interview.role} Interview
                   </span>
+                </div> */}
+                  <span className="flex gap-4">
+                    {feedback?.metadata?.skills && Object.keys(feedback?.metadata?.skills).slice(0,4).map((skill, key) => (
+                      <span key={key} className="rounded-[28px] border-[2px] hover:bg-gray-600 hover:text-white transition-colors duration-200 border-gray-700 text-black p-1 px-4 text-sm bg-white">
+                        {skill.replaceAll(/[-_]+/g, " ")}
+                      </span>
+                    ))}
+                  </span>
                 </div>
-              </div>
 
-              {/* Hover Accent Bar */}
-              <div className="absolute top-0 left-0 h-full w-1 bg-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition"></div>
-            </div>
-          ))}
+                {/* Hover Accent Bar */}
+                <div className="absolute top-0 left-0 h-full w-1 bg-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition"></div>
+              </div>
+            );
+          })}
 
           {filteredFeedbacks.length === 0 && (
             <p className="text-center text-gray-500 mt-10">
@@ -187,7 +204,7 @@ export default function FeedbackScreen() {
 
         {previewResume && (
           <PDFViewer
-            fileUrl={previewResume.file}
+            fileUrl={previewResume}
             onClose={() => setPreviewResume(null)}
           />
         )}

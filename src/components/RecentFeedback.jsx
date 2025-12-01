@@ -2,12 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { feedbackImpovementSvg } from "../data/SvgImageData";
 
-const RecentFeedback = ({ interviews, loading = false }) => {
-  // Filter only interviews with feedback
-  const interviewsWithFeedback = interviews.filter(
-    (interview) => interview?.metadata?.feedback
-  );
-
+const RecentFeedback = ({ feedbacks, loading = false }) => {
   if (loading) {
     return (
       <div className="sathi-card animate-pulse">
@@ -37,7 +32,7 @@ const RecentFeedback = ({ interviews, loading = false }) => {
         Recent Feedback
       </h3>
 
-      {interviewsWithFeedback.length === 0 ? (
+      {feedbacks.length === 0 ? (
         <div className="text-center py-6">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -60,54 +55,57 @@ const RecentFeedback = ({ interviews, loading = false }) => {
         </div>
       ) : (
         <div className="space-y-4">
-          {interviewsWithFeedback.slice(0, 3).map((interview) => (
-            <div
-              key={interview.id}
-              className="border-b border-gray-100 py-4 last:border-0 last:pb-0"
-            >
-              <div className="flex justify-between mb-2">
-                <span className="font-medium text-gray-900">
-                  {new Date(interview?.ended_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </span>
-                <div className="flex items-center">
-                  <span className="text-sm font-medium">
-                    Score: {interview.metadata.feedback?.overall_score}%
-                  </span>
-                  <div
-                    className={`w-2 h-2 ml-2 rounded-full ${
-                      (interview?.metadata?.feedback?.overall_score || 0) >= 90
-                        ? "bg-[#d800ff]"
-                        : (interview?.metadata?.feedback?.overall_score || 0) >=
-                          75
-                        ? "bg-[#0098ff]"
-                        : (interview?.metadata?.feedback?.overall_score || 0) >=
-                          50
-                        ? "bg-[#06e55c]"
-                        : (interview?.metadata?.feedback?.overall_score || 0) >
-                          20
-                        ? "bg-[#ffad19]"
-                        : "bg-[#ff0000]"
-                    }`}
-                  ></div>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500 line-clamp-2 mb-1 flex">
-                {feedbackImpovementSvg}{" "}
-                {interview?.metadata?.feedback?.improvements[0]}
-              </div>
-              <Link
-                to={`/feedback/${interview?.id}`}
-                className="text-xs text-sathi-primary hover:underline"
+          {feedbacks.slice(0, 3).map((feedback) => {
+            const interview_info = feedback?.metadata?.interview_info;
+            return (
+              <div
+                key={feedback.id}
+                className="border-b border-gray-100 py-4 last:border-0 last:pb-0"
               >
-                View detailed feedback
-              </Link>
-            </div>
-          ))}
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium text-gray-900">
+                    {new Date(interview_info?.ended_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                      }
+                    )}
+                  </span>
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium">
+                      Score: {Math.round(feedback?.metadata?.overall_score)}%
+                    </span>
+                    <div
+                      className={`w-2 h-2 ml-2 rounded-full ${
+                        (feedback?.metadata?.overall_score || 0) >= 90
+                          ? "bg-[#d800ff]"
+                          : (feedback?.metadata?.overall_score || 0) >= 75
+                          ? "bg-[#0098ff]"
+                          : (feedback?.metadata?.overall_score || 0) >= 50
+                          ? "bg-[#06e55c]"
+                          : (feedback?.metadata?.overall_score || 0) > 20
+                          ? "bg-[#ffad19]"
+                          : "bg-[#ff0000]"
+                      }`}
+                    ></div>
+                  </div>
+                </div>
+                {/* <div className="text-sm text-gray-500 line-clamp-2 mb-1 flex">
+                {feedbackImpovementSvg}{" "}
+                {feedback?.improvements[0]}
+              </div> */}
+                <Link
+                  to={`/feedback/${feedback?.id}`}
+                  className="text-xs text-sathi-primary hover:underline"
+                >
+                  View detailed feedback
+                </Link>
+              </div>
+            );
+          })}
 
-          {interviewsWithFeedback.length > 3 && (
+          {feedbacks.length > 3 && (
             <div className="pt-4 text-center">
               <Link
                 to="/feedback"
